@@ -4,11 +4,47 @@ import { useCardStore } from "@/store/useCardStore";
 const PreviewCard = forwardRef<HTMLDivElement>((_, ref) => {
   const { text, fontFamily, fontSize, lineHeight, showDots, showBorder } = useCardStore();
 
-  const lines = text.split("\n").filter((line) => line.length > 0);
+  const isPunctuation = (char: string) => /[，。！？；：、,.!?;:]/.test(char);
 
-  const getCharDots = (char: string) => {
-    const dotAfter = /[，。！？；：、,.!?;:]/;
-    return dotAfter.test(char);
+  const renderText = () => {
+    if (!text.trim()) {
+      return <span className="text-ink-700/40">請輸入文字...</span>;
+    }
+
+    const chars = Array.from(text);
+    return chars.map((char, index) => {
+      if (char === "\n") {
+        return <br key={index} />;
+      }
+      const isPunc = isPunctuation(char);
+      const shouldShowDot = showDots && isPunc;
+      return (
+        <span key={index} className="relative inline-block">
+          <span
+            style={{
+              fontSize: isPunc && showDots ? `${fontSize * 0.7}px` : undefined,
+              color: isPunc && showDots ? "#C23A2B" : "#1A1A1A",
+            }}
+          >
+            {char}
+          </span>
+          {shouldShowDot && (
+            <span
+              style={{
+                position: "absolute",
+                right: `-${fontSize * 0.2}px`,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: `${Math.max(6, fontSize * 0.2)}px`,
+                height: `${Math.max(6, fontSize * 0.2)}px`,
+                backgroundColor: "#C23A2B",
+                borderRadius: "50%",
+              }}
+            />
+          )}
+        </span>
+      );
+    });
   };
 
   return (
@@ -21,67 +57,25 @@ const PreviewCard = forwardRef<HTMLDivElement>((_, ref) => {
         style={{
           width: "560px",
           height: "720px",
-          padding: showBorder ? "36px" : "24px",
+          padding: showBorder ? "40px" : "28px",
         }}
       >
         <div
-          className="vertical-text relative w-full h-full flex justify-start items-start"
           style={{
+            writingMode: "vertical-rl",
+            WebkitWritingMode: "vertical-rl" as any,
+            textOrientation: "upright",
             fontFamily,
             fontSize: `${fontSize}px`,
-            lineHeight,
+            lineHeight: lineHeight,
             color: "#1A1A1A",
-            letterSpacing: "0.15em",
+            letterSpacing: "0.2em",
+            width: "100%",
+            height: "100%",
+            overflow: "hidden",
           }}
         >
-          {lines.length === 0 ? (
-            <span className="text-ink-700/40 vertical-text">請輸入文字...</span>
-          ) : (
-            lines.map((line, lineIndex) => (
-              <div
-                key={lineIndex}
-                className="flex flex-col items-center relative"
-                style={{
-                  marginRight: lineIndex < lines.length - 1 ? `${fontSize * 0.8}px` : "0",
-                }}
-              >
-                {Array.from(line).map((char, charIndex) => {
-                  const shouldShowDot = showDots && getCharDots(char);
-                  const isPunctuation = /[，。！？；：、,.!?;:]/.test(char);
-                  return (
-                    <span
-                      key={charIndex}
-                      className="relative inline-flex items-center justify-center"
-                      style={{
-                        height: `${fontSize * lineHeight}px`,
-                        width: `${fontSize * 1.1}px`,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: isPunctuation ? `${fontSize * 0.6}px` : undefined,
-                          color: isPunctuation && showDots ? "#C23A2B" : undefined,
-                        }}
-                      >
-                        {char}
-                      </span>
-                      {shouldShowDot && (
-                        <span
-                          className="dot-marker"
-                          style={{
-                            right: `-${fontSize * 0.25}px`,
-                            top: "50%",
-                            width: `${Math.max(6, fontSize * 0.22)}px`,
-                            height: `${Math.max(6, fontSize * 0.22)}px`,
-                          }}
-                        />
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
-            ))
-          )}
+          {renderText()}
         </div>
       </div>
     </div>
